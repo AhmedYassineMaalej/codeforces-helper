@@ -1,12 +1,14 @@
-use std::{
-    fs,
-    io::Write,
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+#![warn(clippy::pedantic)]
+#![warn(clippy::unwrap_used)]
+
+use std::{fs, path::PathBuf};
 
 use clap::{Parser, Subcommand};
 use clipboard_rs::{Clipboard, ClipboardContext};
+
+use crate::run::run;
+
+mod run;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -17,73 +19,89 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Input,
-    Output,
-    Run { file: PathBuf },
+    /// Run code with test input
+    Run {
+        #[arg(help = "path to the C++ file to run")]
+        source: PathBuf,
+        #[arg(short, long, help = "show execution output in terminal")]
+        show: bool,
+        #[arg(short, long, help = "compare execution output with expected output")]
+        compare: bool,
+    },
+    /// Set the test's input from the clipboard
+    Input {
+        #[arg(short, long)]
+        clear: bool,
+    },
+    /// Set the test's expected output from the clipboard
+    Output {
+        #[arg(short, long)]
+        clear: bool,
+    },
 }
 
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Run { file } => {
-            run_file(file);
-        }
-        Commands::Input => input(),
-        Commands::Output => output(),
-    }
-}
-
-fn run_file(file: PathBuf) {
-    // compile passed file with output ./program
-    let command = Command::new("g++")
-        .arg(file.to_str().unwrap())
-        .arg("-o")
-        .arg("program")
-        .spawn()
-        .unwrap()
-        .wait()
-        .unwrap();
-
-    // run ./program
-    let mut command = Command::new("./program")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
-
-    // read test input
-    let input = fs::read_to_string("input.txt").unwrap();
-
-    let mut stdin = command.stdin.as_mut().unwrap();
-    stdin.write_all(input.as_bytes()).unwrap();
-
-    let output_found = String::from_utf8(command.wait_with_output().unwrap().stdout).unwrap();
-    let output_expected = fs::read_to_string("output.txt").unwrap();
-
-    dbg!(&output_found);
-    dbg!(&output_expected);
-
-    if output_found == output_expected {
-        println!("Tests can successfully!");
-    } else {
-        println!("Tests failed!");
+        Commands::Run {
+            source: file,
+            show,
+            compare,
+        } => run(file, show, compare),
+        Commands::Input { .. } => input(),
+        Commands::Output { .. } => output(),
     }
 }
 
 fn input() {
     // get content of copied input from clipboard
-    let ctx = ClipboardContext::new().unwrap();
-    let content = ctx.get_text().unwrap();
-    dbg!(&content);
+    let Ok(ctx) = ClipboardContext::new() else {
+        println!(
+            "error: failed to access system clipboard!\nPlease manually create input.txt containing the desired input"
+        );
+        return;
+    };
 
-    fs::write("input.txt", content).unwrap();
+    let Ok(content) = ctx.get_text() else {
+        println!("error: failed to read from system clipboard!");
+        println!("Make sure the clipboard contains text data");
+        return;
+    };
+
+    if content.is_empty() {
+        println!("warning: found empty clipboard!");
+        println!("make sure to copy the input before running this command");
+        return;
+    }
+
+    if let Err(_e) = fs::write("input.txt", content) {
+        println!("error: failed to write clipboard's content to input.txt");
+    }
 }
 
 fn output() {
     // get content of copied input from clipboard
-    let ctx = ClipboardContext::new().unwrap();
-    let mut content = ctx.get_text().unwrap();
+    let Ok(ctx) = ClipboardContext::new() else {
+        println!(
+            "error: failed to access system clipboard!\nPlease manually create input.txt containing the desired input"
+        );
+        return;
+    };
 
-    fs::write("output.txt", content).unwrap();
+    let Ok(content) = ctx.get_text() else {
+        println!("error: failed to read from system clipboard!");
+        println!("Make sure the clipboard contains text data");
+        return;
+    };
+
+    if content.is_empty() {
+        println!("warning: found empty clipboard!");
+        println!("make sure to copy the input before running this command");
+        return;
+    }
+
+    if let Err(_e) = fs::write("output.txt", content) {
+        println!("error: failed to write clipboard's content to input.txt");
+    }
 }
