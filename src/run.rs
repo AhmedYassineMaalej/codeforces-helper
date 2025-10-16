@@ -28,11 +28,6 @@ pub fn run(source: &Path, show: bool, interactive: bool, compare: bool) {
 
     if compare && let Err(e) = compare_outputs(&output, source) {
         println!("{e}");
-        return;
-    }
-
-    if let Err(e) = write_output(&output) {
-        println!("{e}");
     }
 }
 
@@ -124,11 +119,6 @@ fn compare_outputs(output: &str, source: &Path) -> Result<(), CliError> {
     }
 
     Ok(())
-}
-
-fn write_output(output: &str) -> Result<(), CliError> {
-    fs::write("output.txt", output)
-        .map_err(|e| CliError::Io(String::from("failed to output to output.txt"), e))
 }
 
 fn copy_code_to_clipboard(code: &Path) -> Result<(), CliError> {
