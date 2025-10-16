@@ -8,6 +8,7 @@ use clipboard_rs::{Clipboard, ClipboardContext};
 
 use crate::run::run;
 
+mod errors;
 mod run;
 
 #[derive(Parser)]
@@ -23,9 +24,11 @@ enum Commands {
     Run {
         #[arg(help = "path to the C++ file to run")]
         source: PathBuf,
-        #[arg(short, long, help = "show execution output in terminal")]
+        #[arg(short, long, help = "Show execution output in terminal")]
         show: bool,
-        #[arg(short, long, help = "compare execution output with expected output")]
+        #[arg(short, long, help = "Take interactive input from user")]
+        interactive: bool,
+        #[arg(short, long, help = "Compare execution output with expected output")]
         compare: bool,
     },
     /// Set the test's input from the clipboard
@@ -45,10 +48,11 @@ fn main() {
 
     match cli.command {
         Commands::Run {
-            source: file,
+            source,
             show,
             compare,
-        } => run(file, show, compare),
+            interactive,
+        } => run(&source, show, interactive, compare),
         Commands::Input { .. } => input(),
         Commands::Output { .. } => output(),
     }
