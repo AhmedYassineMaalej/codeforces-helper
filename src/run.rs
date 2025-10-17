@@ -114,8 +114,10 @@ fn compare_outputs(output: &str, source: &Path) -> Result<(), CliError> {
     if output == expected {
         println!("test case passed!");
         copy_code_to_clipboard(source)?;
-
-        return Ok(());
+    } else {
+        println!("test failed!");
+        println!("expected:\n{expected}");
+        println!("found:\n{output}");
     }
 
     Ok(())
