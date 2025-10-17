@@ -53,4 +53,6 @@ Options:
   -c, --compare      Compare execution output with expected output
   -h, --help         Print help
 ```
+# Contributing
+Feel free to suggest features, user experience improvements as well as open issues and pull requests
 
