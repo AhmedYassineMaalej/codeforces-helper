@@ -6,7 +6,7 @@ compile, run and test your code with 1 command.
 
 # Installation
 
-Simply clone the repository, compile the program and move the executable to `/bin`
+Simply clone the repository, compile the program and add the binary to your PATH.
 
 # Features
 - Intuitive and simple usage (see [usage](#usage))
@@ -48,8 +48,9 @@ Arguments:
   <SOURCE>  path to the C++ file to run
 
 Options:
-  -s, --show     show execution output in terminal
-  -c, --compare  compare execution output with expected output
-  -h, --help     Print help
+  -s, --show         Show execution output in terminal
+  -i, --interactive  Take interactive input from user
+  -c, --compare      Compare execution output with expected output
+  -h, --help         Print help
 ```
 
